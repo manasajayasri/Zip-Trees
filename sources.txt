@@ -1,0 +1,179 @@
+The research paper of ZIP trees provides with pseudo code for three algorithms: 
+
+ALGORITHM 1: Recursive Versions of Insertion and Deletion
+insert(x, root):
+if root = null then {x.left ← x.right ← null; x.rank ← RandomRank; return x}
+if x.key < root.key then
+	if insert(x, root.left) = x then
+		if x.rank < root.rank then root.left ← x
+		else {root.left ← x.right; x.right ← root; return x}
+else
+	if insert(x, root.right) = x then
+		if x.rank ≤ root.rank then root.right ← x
+		else {root.right ← x.left; x.left ← root; return x}
+return root
+
+zip(x, y):
+if x = null then return y
+if y = null then return x
+if x.rank < y.rank then {y.left ← zip(x, y.left); return y}
+else {x.right ← zip(x.right, y); return x}
+
+delete(x, root):
+if x.key = root.key then return zip(root.left, root.right)
+if x.key < root.key then
+	if x.key = root.left.key then
+		root.left ← zip(root.left.left, root.left.right)
+	else delete(x, root.left)
+else
+	if x.key = root.right.key then
+		root.right ← zip(root.right.left, root.right.right)
+	else delete(x, root.right)
+return root
+
+ALGORITHM 2: Iterative Insertion
+insert(x)
+rank ← x.rank ← RandomRank
+key ← x.key
+cur ← root
+while cur   null and (rank < cur.rank or (rank = cur.rank and key > cur.key)) do
+	prev ← cur
+	cur ← if key < cur.key then cur.left else cur.right
+if cur = root then root ← x
+else if key < prev.key then prev.left ← x
+else prev.right ← x
+if cur = null then {x.left ← x.right ← null; return}
+if key < cur.key then x.right ← cur else x.left ← cur
+prev ← x
+while cur   null do
+fix ← prev
+if cur.key < key then
+	repeat {prev ← cur; cur ← cur.right}
+	until cur = null or cur.key > key
+else
+	repeat {prev ← cur; cur ← cur.left}
+	until cur = null or cur.key < key
+if fix.key > key or (fix = x and prev.key > key) then
+	fix.left ← cur
+else
+	fix.right ← cur
+	
+ALGORITHM 3: Iterative Deletion
+delete(x)
+key ← x.key
+cur ← root
+while key   cur.key do
+	prev ← cur
+	cur ← if key < cur.key then cur.left else cur.right
+left ← cur.left; right ← cur.right
+if left = null then cur ← right
+else if right = null then cur ← left
+else if left.rank ≥ right.rank then cur ← left
+else cur ← right
+if root = x then root ← cur
+else if key < prev.key then prev.left ← cur
+else prev.right ← cur
+while left   null and right   null do
+	if left.rank ≥ right.rank then
+		repeat {prev ← left; left ← left.right}
+		until left = null or left.rank < right.rank
+		prev.right ← right
+	else
+		repeat {prev ← right; right ← right.left}
+		until right = null or left.rank ≥ right.rank
+		prev.left ← left
+		
+			
+Rust Implementation of Tarjan's Zip Tree: To implement Zip Trees in Java based on the Rust project, we would translate the Rust code for get, insert, remove, and clone methods into Java, adapting Rust's ownership and type system to Java's object-oriented paradigm. 
+This involves creating a ZipTree class in Java with methods that mimic the functionality of the Rust version, ensuring to handle memory management according to Java's garbage collection system. 
+We would also need to adjust for Rust's pattern matching and error handling to fit Java's exception handling mechanisms.
+
+Detailed Rust implementations by the author - Tarjan's zip tree implementation: https://docs.rs/ziptree/latest/ziptree/index.html
+
+Get Method: https://docs.rs/ziptree/latest/src/ziptree/lib.rs.html#115-135
+Insert Method: https://docs.rs/ziptree/latest/src/ziptree/lib.rs.html#196-332
+Remove Method: https://docs.rs/ziptree/latest/src/ziptree/lib.rs.html#334-477
+Clone Method: https://docs.rs/ziptree/latest/src/ziptree/lib.rs.html#629-691
+
+
+To evaluate the efficiency of Zip Trees in comparison to Normal Binary Search Trees, the following pseudocode outlines the operations related to a Normal Binary Search Tree in accordance to ZIP tree algorithm
+
+ALGORITHM 1: Recursive Versions of Insertion and Deletion
+
+insert_recursive(root, key):
+    if root is null then return new Node(key)
+    if key < root.key then root.left = insert(root.left, key)
+    else if key > root.key then root.right = insert(root.right, key)
+    return root
+
+delete_recursive(root, key):
+    if root is null then return root
+    if key < root.key then root.left = deleteNode(root.left, key)
+    else if key > root.key then root.right = deleteNode(root.right, key)
+    else:
+        if root.left is null then return root.right
+        else if root.right is null then return root.left
+        root.key = findMinValueNode(root.right).key
+        root.right = deleteNode(root.right, root.key)
+    return root
+    
+    
+ALGORITHM 2: Iterative Insertion
+
+insert_iterative(root, key):
+    new_node = new Node(key)
+    if root is null then return new_node
+    current = root
+    while current is not null:
+        if key < current.key:
+            if current.left is null then current.left = new_node
+                break
+            else then current = current.left
+        else:
+            if current.right is null then current.right = new_node
+                break
+            else then current = current.right
+    return root
+
+    
+ALGORITHM 3: Iterative Deletion
+
+delete_iterative(root, key):
+    current = root
+    parent = null
+    while current is not null and current.key is not equal to key:
+        parent = current
+        if key < current.key:
+            current = current.left
+        else:
+            current = current.right
+    if current is null then return root
+    if current.left is null:
+        temp = current.right
+        if parent is null then root = temp
+        else if key < parent.key then parent.left = temp
+        else then parent.right = temp
+    else if current.right is null:
+        temp = current.left
+        if parent is null then root = temp
+        else if key < parent.key then parent.left = temp
+        else then parent.right = temp
+    else:
+        temp = minValueNode(current.right)
+        current.key = temp.key
+        current.right = delete_iterative(current.right, temp.key)
+    return root
+    
+To compare ZIP tree with any other normal BST there isn't a predefined library which implements a BST . So we are implementing a AVL tree as well and then compare with ZIP tree. To implement AVL tree we are referring the below links.     
+
+Insert Method: https://www.geeksforgeeks.org/insertion-in-binary-search-tree/
+Delete Method: https://www.geeksforgeeks.org/deletion-in-binary-search-tree/ 
+https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/src-html/org/apache/commons/math3/geometry/partitioning/utilities/AVLTree.html#line.56
+
+
+
+
+
+
+
+ 
